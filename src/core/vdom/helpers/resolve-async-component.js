@@ -66,14 +66,14 @@ export function resolveAsyncComponent (
       for (let i = 0, l = contexts.length; i < l; i++) {
         contexts[i].$forceUpdate()
         const currContext = contexts[i]
-        nextFrame(() => {
-          const contextIdx = contexts.indexOf(currContext)
-          if (contextIdx) {
-            currContext.$nextTick(() => {
+        const contextIdx = contexts.indexOf(currContext)
+        if (contextIdx) {
+          currContext.$nextTick(() => {
+            nextFrame(() => {
               contexts.splice(contextIdx, 1)
             })
-          }
-        })
+          })
+        }
       }
     }
 
