@@ -11,11 +11,12 @@ import {
 } from 'core/util/index'
 
 import { createEmptyVNode } from 'core/vdom/vnode'
+import { nextFrame } from '../../../platforms/web/runtime/transition-util'
 
 function ensureCtor (comp: any, base) {
   if (
     comp.__esModule ||
-    (hasSymbol && comp[Symbol.toStringTag] === 'Module')
+        (hasSymbol && comp[Symbol.toStringTag] === 'Module')
   ) {
     comp = comp.default
   }
@@ -26,10 +27,10 @@ function ensureCtor (comp: any, base) {
 
 export function createAsyncPlaceholder (
   factory: Function,
-  data: ?VNodeData,
+  data: ? VNodeData,
   context: Component,
-  children: ?Array<VNode>,
-  tag: ?string
+  children: ? Array<VNode>,
+  tag: ? string
 ): VNode {
   const node = createEmptyVNode()
   node.asyncFactory = factory
@@ -64,6 +65,15 @@ export function resolveAsyncComponent (
     const forceRender = () => {
       for (let i = 0, l = contexts.length; i < l; i++) {
         contexts[i].$forceUpdate()
+        const currContext = contexts[i]
+        nextFrame(() => {
+          const contextIdx = contexts.indexOf(currContext)
+          if (contextIdx) {
+            currContext.$nextTick(() => {
+              contexts.splice(contextIdx, 1)
+            })
+          }
+        })
       }
     }
 
@@ -80,7 +90,7 @@ export function resolveAsyncComponent (
     const reject = once(reason => {
       process.env.NODE_ENV !== 'production' && warn(
         `Failed to resolve async component: ${String(factory)}` +
-        (reason ? `\nReason: ${reason}` : '')
+                (reason ? `\nReason: ${reason}` : '')
       )
       if (isDef(factory.errorComp)) {
         factory.error = true
